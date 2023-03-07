@@ -1,3 +1,9 @@
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+
 [tool.flake8]
 ignore = ["D100","D103"]
 exclude = [".eggs", ".git", ".tox", ".venv", ".build", "dist", "charmhelpers", "mod", "build", "lib/charms/operator_libs_linux"]
