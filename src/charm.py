@@ -19,6 +19,7 @@ import yaml
 from charms.operator_libs_linux.v1 import snap, systemd
 from charms.software_inventory_exporter.v0.software_inventory import SoftwareInventoryProvider
 from ops.charm import CharmBase, ConfigChangedEvent, InstallEvent
+from ops.framework import Framework
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, ModelError
 
@@ -34,9 +35,9 @@ class SoftwareInventoryExporterCharm(CharmBase):
     EXPORTER_CONF = f"/var/snap/{EXPORTER_SNAP_NAME}/common/config.yaml"
     EXPORTER_SERVICE = f"snap.{EXPORTER_SNAP_NAME}.{EXPORTER_SNAP_NAME}.service"
 
-    def __init__(self, *args):
+    def __init__(self, framework: Framework) -> None:
         """Initialize charm."""
-        super().__init__(*args)
+        super().__init__(framework)
         self.snaps = snap.SnapCache()
 
         self.framework.observe(self.on.install, self._on_install)
@@ -60,9 +61,9 @@ class SoftwareInventoryExporterCharm(CharmBase):
             snap_path = str(self.model.resources.fetch("exporter-snap"))
             # Don't return path to empty resource file
             if not os.path.getsize(snap_path) > 0:
-                snap_path = None
+                return None
         except ModelError:
-            snap_path = None
+            return None
 
         return snap_path
 
@@ -88,7 +89,7 @@ class SoftwareInventoryExporterCharm(CharmBase):
         self.reconfigure_exporter()
         self.assess_status()
 
-    def _on_config_changed(self, _: ConfigChangedEvent):
+    def _on_config_changed(self, _: ConfigChangedEvent) -> None:
         """Update exporter configuration and update related applications."""
         port = self.config["port"]
         address = self.config["bind_address"]
@@ -97,22 +98,22 @@ class SoftwareInventoryExporterCharm(CharmBase):
         self.provider_endpoint.update_consumers(str(port), address)
         self.assess_status()
 
-    def reconfigure_exporter(self):
+    def reconfigure_exporter(self) -> None:
         """Render new exporter config and restart its service."""
         self.render_exporter_config()
         self.exporter.restart()
 
-    def render_exporter_config(self):
+    def render_exporter_config(self) -> None:
         """Generate new exporter config based on the charm config and save it to file."""
         settings = {
-            "bind_address": self.config.get("bind_address"),
-            "port": int(self.config.get("port")),
+            "bind_address": self.config["bind_address"],
+            "port": int(self.config["port"]),
         }
         config = {"settings": settings}
         with open(self.EXPORTER_CONF, "w", encoding="UTF-8") as conf_file:
             yaml.safe_dump(config, conf_file)
 
-    def assess_status(self):
+    def assess_status(self) -> None:
         """Set charm status based on the status of the exporter service."""
         if systemd.service_running(self.EXPORTER_SERVICE):
             self.unit.status = ActiveStatus("Unit is ready.")

@@ -134,7 +134,10 @@ class SoftwareInventoryProvider(Object):
         """Update data in a single relation according to the current config."""
         host = self.bound_address
         if host == "0.0.0.0":
-            host = str(self.charm.model.get_binding(relation).network.bind_address)
+            endpoint_binding = self.charm.model.get_binding(relation)
+            if endpoint_binding is None:
+                raise RuntimeError(f"Failed to get binding for a relation {relation.name}")
+            host = str(endpoint_binding.network.bind_address)
 
         relation_data = ExporterConfig(model=self.model.name, hostname=host, port=self.port)
         relation.data[self.charm.unit].update(asdict(relation_data))
