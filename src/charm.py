@@ -32,7 +32,7 @@ class SoftwareInventoryExporterCharm(CharmBase):
     """Software Inventory Exporter charm."""
 
     EXPORTER_SNAP_NAME = "software-inventory-exporter"
-    EXPORTER_CONF = f"/var/snap/{EXPORTER_SNAP_NAME}/common/config.yaml"
+    EXPORTER_CONF = f"/var/snap/{EXPORTER_SNAP_NAME}/current/config.yaml"
     EXPORTER_SERVICE = f"snap.{EXPORTER_SNAP_NAME}.{EXPORTER_SNAP_NAME}.service"
 
     def __init__(self, framework: Framework) -> None:
