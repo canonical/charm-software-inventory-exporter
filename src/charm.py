@@ -13,12 +13,18 @@ develop a new k8s charm using the Operator Framework:
 """
 import logging
 import os
-from typing import Optional
+from typing import Optional, Union
 
 import yaml
 from charms.operator_libs_linux.v1 import snap
 from charms.software_inventory_exporter.v0.software_inventory import SoftwareInventoryProvider
-from ops.charm import CharmBase, ConfigChangedEvent, InstallEvent
+from ops.charm import (
+    CharmBase,
+    ConfigChangedEvent,
+    InstallEvent,
+    UpdateStatusEvent,
+    UpgradeCharmEvent,
+)
 from ops.framework import Framework
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, ModelError
@@ -42,6 +48,8 @@ class SoftwareInventoryExporterCharm(CharmBase):
 
         self.framework.observe(self.on.install, self._on_install)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
+        self.framework.observe(self.on.upgrade_charm, self._on_install)
+        self.framework.observe(self.on.update_status, self._on_update_status)
 
         self.provider_endpoint = SoftwareInventoryProvider(
             charm=self,
@@ -72,7 +80,7 @@ class SoftwareInventoryExporterCharm(CharmBase):
         """Return Snap object representing Software Inventory Exporter snap."""
         return self.snaps[self.EXPORTER_SNAP_NAME]
 
-    def _on_install(self, _: InstallEvent) -> None:
+    def _on_install(self, _: Union[InstallEvent, UpgradeCharmEvent]) -> None:
         """Install Software Inventory Exporter snap.
 
         Snap can be installed either from local resource or from Snapstore.
@@ -96,6 +104,10 @@ class SoftwareInventoryExporterCharm(CharmBase):
 
         self.reconfigure_exporter()
         self.provider_endpoint.update_consumers(str(port), address)
+        self.assess_status()
+
+    def _on_update_status(self, _: UpdateStatusEvent) -> None:
+        """Trigger unit's status assessment."""
         self.assess_status()
 
     def reconfigure_exporter(self) -> None:
@@ -126,6 +138,7 @@ class SoftwareInventoryExporterCharm(CharmBase):
             )
 
     def is_exporter_running(self) -> bool:
+        """Return true if exporter's service is running."""
         return self.exporter.services[self.EXPORTER_SNAP_NAME]["active"]
 
 

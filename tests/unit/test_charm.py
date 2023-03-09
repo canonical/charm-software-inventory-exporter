@@ -132,12 +132,20 @@ def test_assess_status(service_running, expected_state, harness, mocker):
 
 @patch.object(charm.SoftwareInventoryExporterCharm, "exporter", new_callable=PropertyMock)
 @pytest.mark.parametrize("exporter_running", [True, False])
-def test_is_exporter_running(exporter, exporter_running, harness, mocker):
+def test_is_exporter_running(exporter, exporter_running, harness):
     """Test helper method that returns whether the exporter service is running or not."""
     service_map = {harness.charm.EXPORTER_SNAP_NAME: {"active": exporter_running}}
     exporter_snap_mock = PropertyMock()
     exporter_snap_mock.services = service_map
     exporter.return_value = exporter_snap_mock
 
-
     assert harness.charm.is_exporter_running() == exporter_running
+
+
+def test_on_update_status(harness, mocker):
+    """Test that _on_update method triggers unit status assessment."""
+    assess_status_mock = mocker.patch.object(harness.charm, "assess_status")
+
+    harness.charm._on_update_status(MagicMock())
+
+    assess_status_mock.assert_called_once()
