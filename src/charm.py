@@ -16,7 +16,7 @@ import os
 from typing import Optional
 
 import yaml
-from charms.operator_libs_linux.v1 import snap, systemd
+from charms.operator_libs_linux.v1 import snap
 from charms.software_inventory_exporter.v0.software_inventory import SoftwareInventoryProvider
 from ops.charm import CharmBase, ConfigChangedEvent, InstallEvent
 from ops.framework import Framework
@@ -115,7 +115,7 @@ class SoftwareInventoryExporterCharm(CharmBase):
 
     def assess_status(self) -> None:
         """Set charm status based on the status of the exporter service."""
-        if systemd.service_running(self.EXPORTER_SERVICE):
+        if self.is_exporter_running():
             self.unit.status = ActiveStatus("Unit is ready.")
         else:
             self.unit.status = BlockedStatus("Exporter service is not running.")
@@ -124,6 +124,9 @@ class SoftwareInventoryExporterCharm(CharmBase):
                 self.EXPORTER_SERVICE,
                 self.exporter.logs(num_lines=20),
             )
+
+    def is_exporter_running(self) -> bool:
+        return self.exporter.services[self.EXPORTER_SNAP_NAME]["active"]
 
 
 if __name__ == "__main__":  # pragma: nocover
