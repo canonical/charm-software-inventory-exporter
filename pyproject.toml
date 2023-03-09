@@ -37,6 +37,9 @@ skip_glob = [
 
 [tool.pylint]
 max-line-length = 99
+ignore-paths = [
+  "lib/charms/operator_libs_linux/",
+]
 
 [tool.mypy]
 warn_unused_ignores = true
@@ -44,6 +47,9 @@ warn_unused_configs = true
 warn_unreachable = true
 disallow_untyped_defs = true
 ignore_missing_imports = true
+exclude = [
+  "^lib/charms/operator_libs_linux/*"
+]
 
 ## Ignore unsupported imports
 [[tool.mypy.overrides]]
